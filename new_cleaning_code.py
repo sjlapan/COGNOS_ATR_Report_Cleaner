@@ -129,8 +129,8 @@ def time_spanner(df, date_column):
     PURPOSE: Create an empty date range spanning the start and end timestamp of your file
         in 1 hour increments.
     '''
-    start_date = min(df.date_column)
-    end_date = max(df.date_column)
+    start_date = min(df[date_column])
+    end_date = max(df[date_column])
 
     # get the range of dates in 1 hour increments
     return pd.period_range(
@@ -167,7 +167,7 @@ def get_devices(df, col_name):
     OUTPUT:
         pandas series of device names
     '''
-    return pd.Series(df.col_name.value_counts().index.to_list())
+    return pd.Series(df[col_name].value_counts().index.to_list())
 
 def time_table(time_range):
     '''
@@ -179,12 +179,14 @@ def time_table(time_range):
         time_df: pandas dataframe
     '''
     # Create the dataframe
-    time_df = pd.Dataframe(
+    time_df = pd.DataFrame(
         {
             'Date': time_range
         }
     )
     # Create weeknumber and weekday columns
+    time_df['Date'] = pd.to_datetime(time_df['Date'])
+
     time_df['Weeknum'] = time_df["Date"].dt.week
     time_df["Weekday"] = time_df["Date"].apply(
         lambda x: datetime.datetime.strftime(x, '%A'))
@@ -230,6 +232,15 @@ def date_device_tile(devices, time_df, primary_loc_dict, sec_loc_dict):
         ).rename_axis("Location Name").reset_index()
 
     # Map the travel directions to the devices.
+    '''
+    Throwing Error here: 
+    Traceback (most recent call last):
+    File "new_cleaning_code.py", line 295, in <module>
+    frame_df = date_device_tile(devices, time_df, primary_dir_dict, secondary_dir_dict)
+    File "new_cleaning_code.py", line 235, in date_device_tile
+    primary_df['Direction'] = primary_df['Location Name'].map(primary_loc_dict)
+    TypeError: 'NoneType' object is not subscriptable
+    '''
     primary_df['Direction'] = primary_df['Location Name'].map(primary_loc_dict)
     secondary_df['Direction'] = secondary_df['Location Name'].map(sec_loc_dict)
 
