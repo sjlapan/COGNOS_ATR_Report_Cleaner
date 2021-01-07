@@ -41,6 +41,40 @@ names_dict = {
                 "085N135 ON SH 85 SE/O B ST, COLORADO SPRINGS": "US-85 Colorado Springs",
                 }
 
+primary_dir_dict = {
+    'I-70 EJMT': "East",
+    'I-25 Broomfield': "North",
+    'I-25 Loveland': "North",
+    'I-25 South of 6th Ave': "North",
+    'US-50 Pueblo': "East",
+    'I-225 North of Colfax': "North",
+    'I-76 Commerce City' : "East",
+    'I-76 Keenesburg' : "East",
+    'US-36 Broomfield': "East",
+    'US-36 Superior': "East",
+    'US-287 Longmont' : "North",
+    'US-85 Colorado Springs': "North",
+    'US-160 Durango': "East",
+    'US-550 Montrose': "North"
+    }
+
+secondary_dir_dict = {
+    'I-70 EJMT': "West",
+    'I-25 Broomfield': "South",
+    'I-25 Loveland': "South",
+    'I-25 South of 6th Ave': "South",
+    'US-50 Pueblo': "West",
+    'I-225 North of Colfax': "South",
+    'I-76 Commerce City' : "West",
+    'I-76 Keenesburg' : "West",
+    'US-36 Broomfield': "West",
+    'US-36 Superior': "West",
+    'US-287 Longmont' : "South",
+    'US-85 Colorado Springs': "South",
+    'US-160 Durango': "West",
+    'US-550 Montrose': "South"
+    }
+
 def data_frame_cleaner(df, atr_dict):
     '''
         Purpose: read in COGNOS ATR Report and reformat it.
@@ -102,7 +136,9 @@ def time_spanner(df, date_column):
         ).strftime('%Y-%m-%d')
 
 def get_total_volumes(df):
+    '''
 
+    '''
     return df.groupby([
         "Road", 
         "Device",
@@ -114,5 +150,23 @@ def get_total_volumes(df):
     ]).sum().reset_index()
 
 def get_devices(df, col_name):
+    '''
+    
+    '''
     return pd.Series(df.col_name.value_counts().index.to_list())
+
+def time_table(time_range):
+    '''
+    
+    '''
+    time_df = pd.Dataframe(
+        {
+            'Date': time_range
+        }
+    )
+    time_df['Weeknum'] = time_df["Date"].dt.week
+    time_df["Weekday"] = time_df["Date"].apply(
+        lambda x: datetime.datetime.strftime(x, '%A'))
+
+    return time_df
 
