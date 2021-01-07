@@ -15,7 +15,7 @@ import collections, csv
 import os
 import linecache
 
-names_dict = {
+atr_dict = {
     "070E214 I-70 E/B JOHNSON / EISENHOWER TUNNEL": "I-70 EJMT",
     "070W216 I-70 W/B EISENHOWER / JOHNSON TUNNEL": "I-70 EJMT",
     
@@ -215,7 +215,7 @@ def date_device_tile(devices, time_df, primary_loc_dict, sec_loc_dict):
 
     df_list = [primary_df, secondary_df]
 
-    # Create two dataframes that have all time intervalls for all devices,
+    # Create two dataframes that have all time intervals for all devices,
     # one for the primary travel direction, and one for the secondary 
     # travel direction.
     for df in df_list:
@@ -255,3 +255,42 @@ def date_device_tile(devices, time_df, primary_loc_dict, sec_loc_dict):
         ignore_index = True
     )
     return bi_directional_df
+
+
+######################################################################################
+'''
+STEPS
+
+1. Import data
+2. Run data_frame_cleaner()
+3. Run time_spanner()
+4. Use the range from Step 3 to get a time dataframe using time_table()
+5. Get total_volumes df with get_total_volumes()
+6. Get the device names with get_devices()
+7. Tile together the dates for each travel direction of each 
+   device with date_device_tile()
+
+'''
+# 1.
+df = pd.read_csv('ATR Daily Report_1-1-19_to_1-3-21.csv')
+
+# 2.
+cleaned_df = data_frame_cleaner(df, atr_dict)
+
+# 3.
+date_range = time_spanner(cleaned_df, 'Date')
+
+# 4.
+time_df = time_table(date_range)
+
+# 5.
+total_vol_df = get_total_volumes(cleaned_df)
+
+# 6. 
+devices = get_devices(total_vol_df, 'Location Name')
+
+# 7.
+frame_df = date_device_tile(devices, time_df, primary_dir_dict, secondary_dir_dict)
+
+#####
+frame_df.to_csv('frame_df.csv')
