@@ -1,5 +1,5 @@
-.xlsx
-.csv
+*.xlsx
+*.csv
 scratch_sheet.ipynb
 .ipynb_checkpoints
 __pycache__
