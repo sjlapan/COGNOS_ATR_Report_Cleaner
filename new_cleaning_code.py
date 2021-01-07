@@ -62,15 +62,15 @@ def data_frame_cleaner(df, atr_dict):
     df["Date"] = df["Date Time Start Short"].apply(
         lambda x: x.split(" ")[0]
         )
-    df_19["Date"] = pd.to_datetime(df["Date"])
+    df["Date"] = pd.to_datetime(df["Date"])
 
-    df_19["Weeknum"] = df["Date"].dt.week
+    df["Weeknum"] = df["Date"].dt.week
 
-    df_19["Weekday"] = df["Date"].apply(
+    df["Weekday"] = df["Date"].apply(
         lambda x: datetime.datetime.strftime(x, '%A')
         )
 
-    df_19["Year"] = df["Date"].dt.year
+    df["Year"] = df["Date"].dt.year
 
     # # Rename volume column
     # df.rename(
@@ -86,5 +86,14 @@ def data_frame_cleaner(df, atr_dict):
     return df
 
 
-def time_spanner():
-    None
+def time_spanner(df, date_column):
+    
+    start_date = min(df.date_column)
+    end_date = max(df.date_column)
+
+    time_interval = pd.period_range(
+        start=start_date,
+        end=end_date,
+        freq = "1d"
+    ).strftime('%Y-%m-%d')
+    
