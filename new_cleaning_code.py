@@ -16,30 +16,30 @@ import os
 import linecache
 
 names_dict = {
-                "070E214 I-70 E/B JOHNSON / EISENHOWER TUNNEL": "I-70 EJMT",
-                "070W216 I-70 W/B EISENHOWER / JOHNSON TUNNEL": "I-70 EJMT",
-                
-                "225N011 SH 225 S/O I-70 - N/O COLFAX": "I-225 North of Colfax",
-                "025N209 I-25 S/O 6TH AVE. N/B ( DENVER )": "I-25 South of 6th Ave",
-                "025N209 I-25 S/O 6TH AVE. S/B ( DENVER )": "I-25 South of 6th Ave",
-                
-                "025N230 I-25 N/O SH 7 INTERCHANGE": "I-25 Broomfield",
-                
-                # Possibly try to map the new device names to I-25 Loveland as well
-                "000N256 I-25 S/O SH 34 INTERCHANGE (LOVELAND)": "I-25 Loveland",
-                
-                "025N272 I-25 N/O FORT COLLINS": "I-25 Fort Collins",
-                
-                "076E012 ON I-76 SW/O 88TH AVE, COMMERCE CITYON I-76 SW/O 88TH AVE, COMMERCE CITY": "I-76 Commerce City",
-                "076E040 ON I-76 EN/O SH 76 SPUR, MARKET ST, KEENESBURG": "I-76 Keenesburg",
-                "160E084 SH 160 E/O SANTA RITA, DURANGO": "US-160 Durango",
-                "287N319 SH 287 N/O LONGMONT": "US-287 Longmont",
-                "036E044 SH 36 E/O SUPERIOR": "US-36 Superior",
-                "036E049 ON SH 36 SE/O SH 121, WADSWORTH PKWY, BROOMFIELD": "US-36 Broomfield",
-                "050E318 SH 50 NW/O SH 96 / 47 PUEBLO": "US-50 Pueblo",
-                "550N119 ON SH 550 SW/O VERNAL RD, MONTROSE": "US-550 Montrose",
-                "085N135 ON SH 85 SE/O B ST, COLORADO SPRINGS": "US-85 Colorado Springs",
-                }
+    "070E214 I-70 E/B JOHNSON / EISENHOWER TUNNEL": "I-70 EJMT",
+    "070W216 I-70 W/B EISENHOWER / JOHNSON TUNNEL": "I-70 EJMT",
+    
+    "225N011 SH 225 S/O I-70 - N/O COLFAX": "I-225 North of Colfax",
+    "025N209 I-25 S/O 6TH AVE. N/B ( DENVER )": "I-25 South of 6th Ave",
+    "025N209 I-25 S/O 6TH AVE. S/B ( DENVER )": "I-25 South of 6th Ave",
+    
+    "025N230 I-25 N/O SH 7 INTERCHANGE": "I-25 Broomfield",
+    
+    # Possibly try to map the new device names to I-25 Loveland as well
+    "000N256 I-25 S/O SH 34 INTERCHANGE (LOVELAND)": "I-25 Loveland",
+    
+    "025N272 I-25 N/O FORT COLLINS": "I-25 Fort Collins",
+    
+    "076E012 ON I-76 SW/O 88TH AVE, COMMERCE CITYON I-76 SW/O 88TH AVE, COMMERCE CITY": "I-76 Commerce City",
+    "076E040 ON I-76 EN/O SH 76 SPUR, MARKET ST, KEENESBURG": "I-76 Keenesburg",
+    "160E084 SH 160 E/O SANTA RITA, DURANGO": "US-160 Durango",
+    "287N319 SH 287 N/O LONGMONT": "US-287 Longmont",
+    "036E044 SH 36 E/O SUPERIOR": "US-36 Superior",
+    "036E049 ON SH 36 SE/O SH 121, WADSWORTH PKWY, BROOMFIELD": "US-36 Broomfield",
+    "050E318 SH 50 NW/O SH 96 / 47 PUEBLO": "US-50 Pueblo",
+    "550N119 ON SH 550 SW/O VERNAL RD, MONTROSE": "US-550 Montrose",
+    "085N135 ON SH 85 SE/O B ST, COLORADO SPRINGS": "US-85 Colorado Springs",
+}
 
 primary_dir_dict = {
     'I-70 EJMT': "East",
@@ -78,7 +78,11 @@ secondary_dir_dict = {
 def data_frame_cleaner(df, atr_dict):
     '''
         Purpose: read in COGNOS ATR Report and reformat it.
-        I
+        INPUTS:
+            df: Cognos export file read in as a pandas df
+            atr_dict: A dictionary of ATR names
+        OUTPUT:
+            dataframe with date/time and location name columns appended
     '''
     # Extract the columns needed
     df = df[[
@@ -122,8 +126,8 @@ def data_frame_cleaner(df, atr_dict):
 
 def time_spanner(df, date_column):
     ''' 
-    Create an empty date range spanning the start and end timestamp of your file
-    in 1 hour increments.
+    PURPOSE: Create an empty date range spanning the start and end timestamp of your file
+        in 1 hour increments.
     '''
     start_date = min(df.date_column)
     end_date = max(df.date_column)
@@ -137,7 +141,12 @@ def time_spanner(df, date_column):
 
 def get_total_volumes(df):
     '''
-
+    PURPOSE: Total the daily volumes for each ATR
+    INPUT: 
+        df: dataframe with travel volumes by hour
+    OUTPUT:
+        dataframe with travel volumes by location by day and travel
+        direction. 
     '''
     return df.groupby([
         "Road", 
@@ -151,22 +160,98 @@ def get_total_volumes(df):
 
 def get_devices(df, col_name):
     '''
-    
+    PURPOSE: Get a pandas series of device names
+    INPUTS:
+        df: dataframe containing the device information
+        col_name: column containing device names
+    OUTPUT:
+        pandas series of device names
     '''
     return pd.Series(df.col_name.value_counts().index.to_list())
 
 def time_table(time_range):
     '''
-    
+    PURPOSE: Create an empty dataframe out of a pandas
+        period range.
+    INPUT:
+        time_range: pandas period range
+    OUTPUT:
+        time_df: pandas dataframe
     '''
+    # Create the dataframe
     time_df = pd.Dataframe(
         {
             'Date': time_range
         }
     )
+    # Create weeknumber and weekday columns
     time_df['Weeknum'] = time_df["Date"].dt.week
     time_df["Weekday"] = time_df["Date"].apply(
         lambda x: datetime.datetime.strftime(x, '%A'))
 
     return time_df
 
+def date_device_tile(devices, time_df, primary_loc_dict, sec_loc_dict):
+    '''
+    PURPOSE: create a dataframe with rows for each hour in the time
+        range, for each device, for all travel directions
+    INPUTS:
+        devices: pandas series of ATR devices
+        time_df: dataframe with one row for every hour in the time interval of
+            the COGNOS output
+        primary_loc_dict: a dict of device names and primary travel directions
+        sec_loc_dict: a dict of device names and secondary travel directions
+    OUTPUTS:
+        bi_directional_df: a dataframe with a row for every hour for each
+            ATR, for each travel direction.
+    '''
+    # get length variables for np.repeat
+    device_count = len(devices)
+    time_length = len(time_df)
+
+    # Initialize variables to be turned into dataframes
+    primary_df = None
+    secondary_df = None
+
+    df_list = [primary_df, secondary_df]
+
+    # Create two dataframes that have all time intervalls for all devices,
+    # one for the primary travel direction, and one for the secondary 
+    # travel direction.
+    for df in df_list:
+        df = pd.DataFrame(
+            np.repeat(
+                time_df.values, 
+                device_count, 
+                axis=0
+            ), 
+            columns = time_df.columns, 
+            index = np.tile(devices, time_length)
+        ).rename_axis("Location Name").reset_index()
+
+    # Map the travel directions to the devices.
+    primary_df['Direction'] = primary_df['Location Name'].map(primary_loc_dict)
+    secondary_df['Direction'] = secondary_df['Location Name'].map(sec_loc_dict)
+
+    # Combine into one dataframe
+    bi_directional_df = pd.concat(
+        [
+            primary_df,
+            secondary_df
+        ],
+        ignore_index=True
+    ).rename(
+        columns = {
+            'Direction': 'Lane Direction'
+        }
+    )
+    # Sort rows by date and location
+    bi_directional_df.sort_values(
+        by= [
+            'Date',
+            'Location Name'
+        ],
+        inplace=True,
+        ignore_index = True
+    )
+    return bi_directional_df
