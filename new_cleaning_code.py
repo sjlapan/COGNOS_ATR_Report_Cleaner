@@ -27,7 +27,7 @@ atr_dict = {
     
     # Possibly try to map the new device names to I-25 Loveland as well
     "000N256 I-25 S/O SH 34 INTERCHANGE (LOVELAND)": "I-25 Loveland",
-    
+    "000N256 I-25 S/O SH 34 INTERCHANGE (LOVELAND)_REMOVED_2020-12-30 12:08:38.958": "I-25 Loveland",
     "025N272 I-25 N/O FORT COLLINS": "I-25 Fort Collins",
     
     "076E012 ON I-76 SW/O 88TH AVE, COMMERCE CITYON I-76 SW/O 88TH AVE, COMMERCE CITY": "I-76 Commerce City",
@@ -211,17 +211,19 @@ def date_device_tile(devices, time_df, primary_loc_dict, sec_loc_dict):
     device_count = len(devices)
     time_length = len(time_df)
 
-    # Initialize variables to be turned into dataframes
-    primary_df = None
-    secondary_df = None
-
-    df_list = [primary_df, secondary_df]
-
     # Create two dataframes that have all time intervals for all devices,
     # one for the primary travel direction, and one for the secondary 
     # travel direction.
-    for df in df_list:
-        df = pd.DataFrame(
+    primary_df = pd.DataFrame(
+            np.repeat(
+                time_df.values, 
+                device_count, 
+                axis=0
+            ), 
+            columns = time_df.columns, 
+            index = np.tile(devices, time_length)
+        ).rename_axis("Location Name").reset_index()
+    secondary_df = pd.DataFrame(
             np.repeat(
                 time_df.values, 
                 device_count, 
@@ -231,20 +233,16 @@ def date_device_tile(devices, time_df, primary_loc_dict, sec_loc_dict):
             index = np.tile(devices, time_length)
         ).rename_axis("Location Name").reset_index()
 
+    df_list = [primary_df, secondary_df]
+
+    print(primary_df.dtypes)
+    print(secondary_df.dtypes)
+
     # Map the travel directions to the devices.
-    '''
-    Throwing Error here: 
-    Traceback (most recent call last):
-    File "new_cleaning_code.py", line 295, in <module>
-    frame_df = date_device_tile(devices, time_df, primary_dir_dict, secondary_dir_dict)
-    File "new_cleaning_code.py", line 235, in date_device_tile
-    primary_df['Direction'] = primary_df['Location Name'].map(primary_loc_dict)
-    TypeError: 'NoneType' object is not subscriptable
-    '''
+    
     primary_df['Direction'] = primary_df['Location Name'].map(primary_loc_dict)
     secondary_df['Direction'] = secondary_df['Location Name'].map(sec_loc_dict)
 
-    # Combine into one dataframe
     bi_directional_df = pd.concat(
         [
             primary_df,
@@ -283,7 +281,7 @@ STEPS
 
 '''
 # 1.
-df = pd.read_csv('ATR Daily Report_1-1-19_to_1-3-21.csv')
+df = pd.read_csv('ATR_Daily_Report_1-1-19_to_1-3-21.csv')
 
 # 2.
 cleaned_df = data_frame_cleaner(df, atr_dict)
