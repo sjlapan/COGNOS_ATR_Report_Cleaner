@@ -87,13 +87,32 @@ def data_frame_cleaner(df, atr_dict):
 
 
 def time_spanner(df, date_column):
-    
+    ''' 
+    Create an empty date range spanning the start and end timestamp of your file
+    in 1 hour increments.
+    '''
     start_date = min(df.date_column)
     end_date = max(df.date_column)
 
-    time_interval = pd.period_range(
-        start=start_date,
-        end=end_date,
-        freq = "1d"
-    ).strftime('%Y-%m-%d')
-    
+    # get the range of dates in 1 hour increments
+    return pd.period_range(
+            start=start_date,
+            end=end_date,
+            freq = "1d"
+        ).strftime('%Y-%m-%d')
+
+def get_total_volumes(df):
+
+    return df.groupby([
+        "Road", 
+        "Device",
+        "Location Name",
+        "Date", 
+        "Weeknum", 
+        "Weekday", 
+        "Lane Direction" 
+    ]).sum().reset_index()
+
+def get_devices(df, col_name):
+    return pd.Series(df.col_name.value_counts().index.to_list())
+
