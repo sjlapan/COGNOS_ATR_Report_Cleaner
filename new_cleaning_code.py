@@ -102,13 +102,13 @@ def data_frame_cleaner(df, atr_dict):
         )
     df["Date"] = pd.to_datetime(df["Date"])
 
-    df["Weeknum"] = df["Date"].dt.week
+    df["Weeknum"] = df["Date"].dt.isocalendar().week
 
     df["Weekday"] = df["Date"].apply(
         lambda x: datetime.datetime.strftime(x, '%A')
         )
 
-    df["Year"] = df["Date"].dt.year
+    df["Year"] = df["Date"].dt.isocalendar().year
 
     # # Rename volume column
     # df.rename(
@@ -192,7 +192,7 @@ def time_table(time_range):
     # Create weeknumber and weekday columns
     time_df['Date'] = pd.to_datetime(time_df['Date'])
 
-    time_df['Weeknum'] = time_df["Date"].dt.week
+    time_df['Weeknum'] = time_df["Date"].dt.isocalendar().week
     time_df["Weekday"] = time_df["Date"].apply(
         lambda x: datetime.datetime.strftime(x, '%A'))
 
@@ -312,6 +312,8 @@ def map_volumes(bi_directional_df, volumes_df):
 
     df['Road'] = df['Location Name'].map(road_dict)
     return df
+
+
 ######################################################################################
 '''
 STEPS
