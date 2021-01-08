@@ -148,11 +148,16 @@ def get_total_volumes(df):
         dataframe with travel volumes by location by day and travel
         direction. 
     '''
+    # Ensure that volumes are integers
+    df['Total Volume'] = df['Total Volume'].map(lambda x: x.replace(',', ''))
+    df['Total Volume'] = df['Total Volume'].astype('int')
+    df.drop(columns = ['Site ID', 'Lane #'], inplace=True)
     return df.groupby([
         "Road", 
         "Device",
         "Location Name",
-        "Date", 
+        "Date",
+        "Year", 
         "Weeknum", 
         "Weekday", 
         "Lane Direction" 
@@ -265,7 +270,48 @@ def date_device_tile(devices, time_df, primary_loc_dict, sec_loc_dict):
     )
     return bi_directional_df
 
+def map_volumes(bi_directional_df, volumes_df):
+    '''
+    PURPOSE: Apply the daily volumes calculated in get_total_volumes()
+        to the full expanded, bi-directional time df.
+    INPUTS: bi_directional_df: the df served by date_device_tile()
+            volumes_df: the df served by get_total_volumes()
+    OUTPUT:
+        final_df: not the final df
+    '''
+    df = pd.merge(
+        bi_directional_df, 
+        volumes_df,
+        on=[
+            "Location Name", 
+            "Date", 
+            "Weeknum", 
+            "Weekday", 
+            "Lane Direction"
+        ], 
+        how="left"
+        )
+    # Route map to fill in gaps
 
+    road_dict = {
+        'I-70 EJMT': "I 70",
+        'I-25 Broomfield': "I 25",
+        'I-25 Loveland': "I 25",
+        'I-25 South of 6th Ave': "I 25",
+        'US-50 Pueblo': "US 50",
+        'I-225 North of Colfax': "I 225",
+        'I-76 Commerce City' : "I 76",
+        'I-76 Keenesburg' : "I 76",
+        'US-36 Broomfield': "US 36",
+        'US-36 Superior': "US 36",
+        'US-287 Longmont' : "US 287",
+        'US-85 Colorado Springs': "US 85",
+        'US-160 Durango': "US 160",
+        'US-550 Montrose': "US 550"
+        }
+
+    df['Road'] = df['Location Name'].map(road_dict)
+    return df
 ######################################################################################
 '''
 STEPS
@@ -278,6 +324,7 @@ STEPS
 6. Get the device names with get_devices()
 7. Tile together the dates for each travel direction of each 
    device with date_device_tile()
+8. Get the volume data appended using map_volumes()
 
 '''
 # 1.
@@ -294,12 +341,15 @@ time_df = time_table(date_range)
 
 # 5.
 total_vol_df = get_total_volumes(cleaned_df)
-
+# total_vol_df.to_csv('total_vol_df.csv')
 # 6. 
 devices = get_devices(total_vol_df, 'Location Name')
 
 # 7.
 frame_df = date_device_tile(devices, time_df, primary_dir_dict, secondary_dir_dict)
+# 8.
+# This serves up the wrong coumns. I'm getting a Year col and a Site ID col but no volumes column.
+frame_df = map_volumes(frame_df, total_vol_df)
 
 #####
 frame_df.to_csv('frame_df.csv')
