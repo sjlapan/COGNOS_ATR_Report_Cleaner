@@ -102,22 +102,13 @@ def data_frame_cleaner(df, atr_dict):
         )
     df["Date"] = pd.to_datetime(df["Date"])
 
-    df["Weeknum"] = df["Date"].dt.isocalendar().week
+    df["Weeknum"] = df["Date"].dt.week
 
     df["Weekday"] = df["Date"].apply(
         lambda x: datetime.datetime.strftime(x, '%A')
         )
 
-    df["Year"] = df["Date"].dt.isocalendar().year
-
-    # # Rename volume column
-    # df.rename(
-    #             columns = {
-    #                 "Total Volume": "{} Volume".format(year_string)
-    #                 },
-    #             inplace=True
-    #             )
-    # Map the ATR names to the df
+    df["Year"] = df["Date"].dt.year
 
     df['Location Name'] = df['Device'].map(atr_dict)
 
@@ -192,7 +183,7 @@ def time_table(time_range):
     # Create weeknumber and weekday columns
     time_df['Date'] = pd.to_datetime(time_df['Date'])
 
-    time_df['Weeknum'] = time_df["Date"].dt.isocalendar().week
+    time_df['Weeknum'] = time_df["Date"].dt.week
     time_df["Weekday"] = time_df["Date"].apply(
         lambda x: datetime.datetime.strftime(x, '%A'))
 
@@ -311,9 +302,59 @@ def map_volumes(bi_directional_df, volumes_df):
         }
 
     df['Road'] = df['Location Name'].map(road_dict)
+    return df.sort_values(
+        by=[
+            'Date', 
+            'Location Name', 
+            'Lane Direction'
+        ], 
+        inplace=True
+    )
+
+def get_prev_year_vol(df, date_col, vol_col):
+    '''
+    PURPOSE: Create a new column that retrieves the volume from 1 year prior to the inline
+        date, starting at Jan 1, 2020.
+    INPUTs: 
+        df: the dataframe served by map_volumes()
+        date_col: string name for column with dates
+        vol_col: string name for column with daily volumes
+    OUTPUT:
+        df: dataframe with new column that has the previous years' volume
+            inline with the date in the volume column.
+    '''
+
+    df['Previous_Year_Volume'] = ''
+    for index, row in df.iterrows():
+        # Start at Jan 1, 2020 (Possibly use .loc to begin loop here rather than searching for it)
+        if row[date_col] >= datetime.date(2020, 1, 1):
+            
+            date = row[date_col]
+            
+            prev_date = (date - datetime.timedelta(weeks=52)).strftime('%Y-%m-%d')
+            
+            location = row['Location Name']
+            
+            lane_dir = row['Lane Direction']
+            
+            row_needed = df[(
+                    df['Date'] == prev_date
+                ) & (
+                    df['Location Name'] == location
+                ) & (
+                    df['Lane Direction'] == lane_dir
+                )]
+            
+            prev_vol = row_needed.values[0,8]
+            
+            df.loc[index, 'Previous_Year_Volume'] = prev_vol
+            
+            print(prev_date)
+            df['Previous_Year_Volume'] = df['Previous_Year_Volume'].replace('', 0)
+            df['Previous_Year_Volume'] = df['Previous_Year_Volume'].replace(np.nan, 0)
+            df['Previous_Year_Volume'] = df['Previous_Year_Volume'].astype('float')
+
     return df
-
-
 ######################################################################################
 '''
 STEPS
@@ -353,5 +394,8 @@ frame_df = date_device_tile(devices, time_df, primary_dir_dict, secondary_dir_di
 # This serves up the wrong coumns. I'm getting a Year col and a Site ID col but no volumes column.
 frame_df = map_volumes(frame_df, total_vol_df)
 
+# 9.
+date_comparison = get_prev_year_vol(frame_df, 'Date', 'Total Volume')
+
 #####
-frame_df.to_csv('frame_df.csv')
+date_comparison.to_csv('final_df.csv')
