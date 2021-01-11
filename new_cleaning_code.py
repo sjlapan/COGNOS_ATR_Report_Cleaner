@@ -140,7 +140,10 @@ def get_total_volumes(df):
         direction. 
     '''
     # Ensure that volumes are integers
-    df['Total Volume'] = df['Total Volume'].map(lambda x: x.replace(',', ''))
+    try:
+        df['Total Volume'] = df['Total Volume'].map(lambda x: x.replace(',', ''))
+    except:
+        pass
     df['Total Volume'] = df['Total Volume'].astype('int')
     df.drop(columns = ['Site ID', 'Lane #'], inplace=True)
     return df.groupby([
@@ -371,7 +374,7 @@ STEPS
 
 '''
 # 1.
-df = pd.read_csv('ATR_Daily_Report_1-1-19_to_1-3-21.csv')
+df = pd.read_csv('raw_data.csv')
 
 # 2.
 cleaned_df = data_frame_cleaner(df, atr_dict)
