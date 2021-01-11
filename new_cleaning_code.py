@@ -305,14 +305,14 @@ def map_volumes(bi_directional_df, volumes_df):
         }
 
     df['Road'] = df['Location Name'].map(road_dict)
-    return df.sort_values(
-        by=[
-            'Date', 
-            'Location Name', 
-            'Lane Direction'
-        ], 
-        inplace=True
-    )
+    return df#.sort_values(
+    #     by=[
+    #         'Date', 
+    #         'Location Name', 
+    #         'Lane Direction'
+    #     ], 
+    #     inplace=True
+    # )
 
 def get_prev_year_vol(df, date_col, vol_col):
     '''
@@ -326,7 +326,7 @@ def get_prev_year_vol(df, date_col, vol_col):
         df: dataframe with new column that has the previous years' volume
             inline with the date in the volume column.
     '''
-
+    
     df['Previous_Year_Volume'] = ''
     for index, row in df.iterrows():
         # Start at Jan 1, 2020 (Possibly use .loc to begin loop here rather than searching for it)
@@ -354,7 +354,7 @@ def get_prev_year_vol(df, date_col, vol_col):
             
             print(prev_date)
             df['Previous_Year_Volume'] = df['Previous_Year_Volume'].replace('', 0)
-            df['Previous_Year_Volume'] = df['Previous_Year_Volume'].replace(np.nan, 0)
+            # df['Previous_Year_Volume'] = df['Previous_Year_Volume'].replace(np.nan, 0)
             df['Previous_Year_Volume'] = df['Previous_Year_Volume'].astype('float')
 
     return df
@@ -374,7 +374,12 @@ STEPS
 
 '''
 # 1.
+
+
 df = pd.read_csv('raw_data.csv')
+# df19 = pd.read_excel('2019.xlsx')
+# df20 = pd.read_excel('2020-21.xlsx')
+# df = pd.concat([df19, df20])
 
 # 2.
 cleaned_df = data_frame_cleaner(df, atr_dict)
@@ -395,10 +400,10 @@ devices = get_devices(total_vol_df, 'Location Name')
 frame_df = date_device_tile(devices, time_df, primary_dir_dict, secondary_dir_dict)
 # 8.
 # This serves up the wrong coumns. I'm getting a Year col and a Site ID col but no volumes column.
-frame_df = map_volumes(frame_df, total_vol_df)
+mapped_df = map_volumes(frame_df, total_vol_df)
 
 # 9.
-date_comparison = get_prev_year_vol(frame_df, 'Date', 'Total Volume')
+date_comparison = get_prev_year_vol(mapped_df, 'Date', 'Total Volume')
 
 #####
 date_comparison.to_csv('final_df.csv')
