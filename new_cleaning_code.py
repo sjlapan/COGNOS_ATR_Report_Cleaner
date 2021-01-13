@@ -305,6 +305,25 @@ def map_volumes(bi_directional_df, volumes_df):
         }
 
     df['Road'] = df['Location Name'].map(road_dict)
+
+    # Add empty column for previous year:
+    df['Previous_Year_Volume'] = ''
+    df = df[[
+        'Road',
+        'Device',
+        'Location Name',
+        'Date',
+        'Weeknum',
+        'Weekday',
+        'Lane Direction',
+        'Previous_Year_Volume',
+        'Total Volume'
+    ]]
+    # Rename columns just to meet conventions used previously.
+    df.rename(columns = {
+        'Previous_Year_Volume': '2019 Volume',
+        'Total Volume': '2020 Volume'
+    }, inplace=True)
     return df#.sort_values(
     #     by=[
     #         'Date', 
@@ -327,7 +346,7 @@ def get_prev_year_vol(df, date_col, vol_col):
             inline with the date in the volume column.
     '''
     
-    df['Previous_Year_Volume'] = ''
+    # df['Previous_Year_Volume'] = ''
     for index, row in df.iterrows():
         # Start at Jan 1, 2020 (Possibly use .loc to begin loop here rather than searching for it)
         if row[date_col] >= datetime.date(2020, 1, 1):
@@ -350,13 +369,28 @@ def get_prev_year_vol(df, date_col, vol_col):
             
             prev_vol = row_needed.values[0,8]
             
-            df.loc[index, 'Previous_Year_Volume'] = prev_vol
+            df.loc[index, '2019 Volume'] = prev_vol
             
             print(prev_date)
-            df['Previous_Year_Volume'] = df['Previous_Year_Volume'].replace('', 0)
+            df['2019 Volume'] = df['2019 Volume'].replace('', 0)
             # df['Previous_Year_Volume'] = df['Previous_Year_Volume'].replace(np.nan, 0)
-            df['Previous_Year_Volume'] = df['Previous_Year_Volume'].astype('float')
+            df['2019 Volume'] = df['2019 Volume'].astype('float')
+    # df = df[[
+    #     'Road',
+    #     'Device',
+    #     'Location Name',
+    #     'Date',
+    #     'Weeknum',
+    #     'Weekday',
+    #     'Lane Direction',
+    #     'Previous_Year_Volume',
+    #     'Total Volume'
+    # ]]
 
+    # df.rename(columns = {
+    #     'Previous_Year_Volume': '2019 Volume',
+    #     'Total Volume': '2020 Volume'
+    # }, inplace=True)
     return df
 ######################################################################################
 '''
@@ -371,12 +405,14 @@ STEPS
 7. Tile together the dates for each travel direction of each 
    device with date_device_tile()
 8. Get the volume data appended using map_volumes()
-
+9.
+10.
 '''
 # 1.
 
-
-df = pd.read_csv('raw_data.csv')
+df = pd.read_excel('C:/Users/StewartLaPan/Dropbox (Navjoy)/NAVJOY ACTIVE PROJECTS/CDOT M&O/101XX - COVID Weekly Report/Weekly Report/Tableau/Data/Volumes/volumes_2021_jan-4_to_jan-10.xlsx')
+master_df = pd.read_csv('C:/Users/StewartLaPan/Dropbox (Navjoy)/NAVJOY ACTIVE PROJECTS/CDOT M&O/101XX - COVID Weekly Report/Weekly Report/Tableau/master.csv', index_col=0)
+master_df['Date'] = pd.to_datetime(master_df['Date'])
 # df19 = pd.read_excel('2019.xlsx')
 # df20 = pd.read_excel('2020-21.xlsx')
 # df = pd.concat([df19, df20])
@@ -399,11 +435,112 @@ devices = get_devices(total_vol_df, 'Location Name')
 # 7.
 frame_df = date_device_tile(devices, time_df, primary_dir_dict, secondary_dir_dict)
 # 8.
-# This serves up the wrong coumns. I'm getting a Year col and a Site ID col but no volumes column.
+# 
 mapped_df = map_volumes(frame_df, total_vol_df)
 
+###########################################################
+# I need a step here that will append a processed dataframe
+# to the master dataframe. That means I'll need to do the 
+# column renaming/reordering in map_volumes instead of 
+# get_prev_year_vol(). That would also mean I'd have to alter
+# the column index get_prev_year_col().
+###########################################################
+
 # 9.
+
+# Need to write this as a function, and account for data types etc.
+mapped_df = pd.concat([master_df, mapped_df], sort=False, ignore_index=True)
+print("length of df after concatenation:")
+print(len(mapped_df))
+print(mapped_df.tail())
+# 10.
 date_comparison = get_prev_year_vol(mapped_df, 'Date', 'Total Volume')
 
 #####
-date_comparison.to_csv('final_df.csv')
+date_comparison.to_csv('final_df2.csv')
+
+###############################################################################
+###############################################################################
+# Incident Cleaning Functions
+###############################################################################
+###############################################################################
+
+# inc_pri_dict = {
+#     'I 70': "East",
+#     'I 25': "North",
+#     'US 50': "East",
+#     'I 225': "North",
+#     'I 76' : "East",
+#     'US 36': "East",
+#     'US 287' : "North",
+#     'US 85': "North",
+#     'US 160': "East",
+#     'US 550': "North"
+#     }
+
+# inc_sec_dict = {
+#     'I 70': "West",
+#     'I 25': "South",
+#     'US 50': "West",
+#     'I 225': "South",
+#     'I 76' : "West",
+#     'US 36': "West",
+#     'US 287' : "South",
+#     'US 85': "South",
+#     'US 160': "West",
+#     'US 550': "South"
+#     }
+
+# direction_dict = {
+#     "North": "North",
+#     "East": "East",
+#     "South": "South",
+#     "West": "West",
+#     "North (BOTH)": "North",
+#     "South (BOTH)": "South",
+#     "East (BOTH)": "East",
+#     "West (BOTH)": "West"
+# }
+
+
+# 1. Read in the data.
+
+# 2. Can re-use time_spanner() here.
+
+# 3. Can re-use time_table() here.
+
+# 4. Map the travel directions to get rid of (BOTH) tags
+
+# 5. Get daily totals
+# daily_total_df = df.groupby(
+#     [
+#         "Date",
+#         "Road", 
+#         "Direction", 
+#         "Start Weeknum", 
+#         "Start Weekday"
+#         ]).sum()
+# daily_total_df.reset_index(inplace=True)
+
+# daily_total_df.drop(
+#     columns = [
+#         "Event ID",
+#         "MM Start", 
+#         "MM End", 
+#         "Event Count 2", 
+#         # "Start Year"
+#         ], 
+#     inplace=True)
+
+# Get series of all included corridors
+
+
+# Get two dataframes for the two travel directions
+# and map the road IDs. Then concatenate and sort them.
+# This will be similar to a function from above,
+# but may need tweaks.
+
+# Then, it will need to search for the prior year's count
+# by matching rows on road, prev date, weekday, and direction.
+
+# Then append to a master data set.
